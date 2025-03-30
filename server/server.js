@@ -12,6 +12,7 @@ app.use(bodyParser.json());
 // Routes
 app.use("/api", userRoutes);
 app.use("/api", companyRoutes);
+app.get("/",console.log("Hello world"));
 
 const PORT = 5000;
 app.listen(PORT, () => {
