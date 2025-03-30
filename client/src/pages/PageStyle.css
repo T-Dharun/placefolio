@@ -1,0 +1,128 @@
+.home-premium {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
+    overflow: hidden;
+  }
+  
+  .content-wrapper {
+    flex: 1;
+    margin-left: 280px; /* Matches sidebar width */
+    padding: 2rem;
+    overflow-y: auto;
+  }
+  
+  .content-header {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(31, 38, 135, 0.1);
+    border-left: 5px solid #3498db;
+  }
+  
+  .header-title {
+    color: #1b4875;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0;
+    text-transform: capitalize;
+    letter-spacing: 0.5px;
+  }
+  
+  .content-body {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    min-height: calc(100vh - 200px);
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  /* No Route Styling */
+  .no-route-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+  }
+  
+  .no-route-title {
+    color: #e74c3c;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .no-route-text {
+    color: #7f8c8d;
+    font-size: 1.2rem;
+    max-width: 500px;
+  }
+  
+  /* Scrollbar Styling */
+  .content-wrapper::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .content-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .content-wrapper::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 4px;
+  }
+  
+  .content-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .home-premium {
+      flex-direction: column;
+    }
+  
+    .content-wrapper {
+      margin-left: 0;
+      padding: 1rem;
+    }
+  
+    .content-header {
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+  
+    .header-title {
+      font-size: 1.5rem;
+    }
+  
+    .content-body {
+      padding: 1.5rem;
+      min-height: auto;
+    }
+  
+    .no-route-title {
+      font-size: 2rem;
+    }
+  
+    .no-route-text {
+      font-size: 1rem;
+    }
+  }
