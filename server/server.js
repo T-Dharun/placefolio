@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 // Routes
 app.use("/api", userRoutes);
 app.use("/api", companyRoutes);
-app.get("/",()=>console.log("Hello world"));
+app.get("/",(req,res)=>res.send("Welcome to the server!"));
 
 const PORT = 5000;
 app.listen(PORT, () => {
