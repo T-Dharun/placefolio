@@ -5,7 +5,7 @@ const { db } = require("../database/db");
 const createStudentCompany = async (req, res) => {
     try {
         const { companyName, companyType, status, excelData, date } = req.body;
-
+        console.log(excelData)
         // Insert or Update Company
         const companyQuery = `
             INSERT INTO Company (company_name, type)
@@ -23,12 +23,13 @@ const createStudentCompany = async (req, res) => {
             for (const row of excelData) {
                 const studentId = row['Reg No'] || row['Roll No'] || row?.RegNo;
                 const studentName = row['Name'] || row['NAME'];
-
+                
                 // Check if student exists
                 const checkStudentQuery = `SELECT roll_no FROM students WHERE roll_no = ?`;
                 const [studentResult] = await db.query(checkStudentQuery, [studentId]);
 
                 // Insert Student if not exists
+                console.log(studentResult);
                 if (studentResult.length === 0) {
                     continue;
                 }
@@ -36,8 +37,7 @@ const createStudentCompany = async (req, res) => {
                 // Insert or Update Student_Company Relationship
                 const studentCompanyQuery = `
                     INSERT INTO Student_Company (studentid, company_id, status, date)
-                    VALUES (?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE status = VALUES(status), date = VALUES(date);
+                    VALUES (?, ?, ?, ?);
                 `;
 
                 await db.query(studentCompanyQuery, [studentId, companyId, status, date]);

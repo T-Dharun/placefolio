@@ -51,11 +51,11 @@ const createTables = async () => {
 
         const createStudentCompanyTable = `
         CREATE TABLE IF NOT EXISTS Student_Company (
+            id INT AUTO_INCREMENT PRIMARY KEY,
             studentid VARCHAR(50),
             company_id INT,
             status VARCHAR(100),
             date VARCHAR(15),
-            PRIMARY KEY (studentid, company_id),
             FOREIGN KEY (studentid) REFERENCES students(roll_no) ON DELETE CASCADE,
             FOREIGN KEY (company_id) REFERENCES Company(company_id) ON DELETE CASCADE
         );`;
