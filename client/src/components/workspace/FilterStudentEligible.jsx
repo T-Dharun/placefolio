@@ -50,6 +50,33 @@ const FilterStudentEligible = () => {
     history_of_arrears: null,
     semester: null,
   });
+  const sortandStore= (filteredData) => {
+    const sortedData = [...filteredData].sort((a, b) => {
+      const getPrefix = (rollObj) => {
+        const roll = rollObj.roll_no;
+        if (!roll) return ''; // Fallback for missing roll_no
+        return roll.slice(4, 5); // 'R' or 'L'
+      };
+    
+      const getNumber = (rollObj) => {
+        const roll = rollObj.roll_no;
+        if (!roll) return Infinity; // Send to end if no roll number
+        return parseInt(roll.slice(5)); // Gets 001, 111, etc.
+      };
+    
+      const prefixA = getPrefix(a);
+      const prefixB = getPrefix(b);
+    
+      if (prefixA === prefixB) {
+        return getNumber(a) - getNumber(b);
+      }
+    
+      return prefixA === 'R' ? -1 : 1;
+    });
+    
+    console.log(sortedData);
+    setFilteredFileData(sortedData);
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -61,7 +88,7 @@ const FilterStudentEligible = () => {
       });
       const result = await response.json();
       setOriginalFileData(result?.students);
-      setFilteredFileData(result?.students);
+      sortandStore(result?.students);
     } catch (err) {
       try {
         const response = await fetch('https://placefolio.onrender.com/api/students', {
@@ -72,7 +99,7 @@ const FilterStudentEligible = () => {
         });
         const result = await response.json();
         setOriginalFileData(result?.students);
-        setFilteredFileData(result?.students);
+        sortandStore(result?.students);
       } catch (er) {
         console.error('Error fetching students cloud data:', er);
       }
@@ -100,8 +127,8 @@ const FilterStudentEligible = () => {
 
       return isCgpaValid && isMark10thValid && isMark12thValid && isArrearsValid && isHistoryOfArrearsValid;
     });
-    console.log(filteredData);
-    setFilteredFileData(filteredData);
+    sortandStore(filteredData);
+
   };
 
   const downloadExcel = () => {

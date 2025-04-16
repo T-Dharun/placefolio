@@ -11,14 +11,21 @@ const CreateStudent = () => {
     // Function to convert Excel serial numbers or formatted dates to YYYY-MM-DD
     const formatDate = (dateValue) => {
         if (!dateValue) return null;
-    
+        let date=null;
         if (typeof dateValue === 'number') {
             const excelStartDate = new Date(1899, 11, 30);
             const parsedDate = new Date(excelStartDate.getTime() + dateValue * 86400000);
             parsedDate.setDate(parsedDate.getDate() + 1);
-            return parsedDate.toISOString().split('T')[0];
+            date=parsedDate.toISOString().split('T')[0];
+            const parts = date.split(/[./\-]/);
+            //console.log(date)
+            if (parts.length === 3) {
+                const [year, month, day] = parts;
+                console.log(day,month,year);
+                return `${year}-${day.padStart(2, '0')}-${month.padStart(2, '0')}`;
+            }
         }
-    
+        
         if (typeof dateValue === 'string') {
             const parts = dateValue.split(/[./\-]/);
             if (parts.length === 3) {
@@ -45,10 +52,11 @@ const CreateStudent = () => {
                     ...row,
                     dob_ddmmyyyy: formatDate(row?.dob_ddmmyyyy),
                 }));
-
+                console.log(json)
                 setFileData(json);
             };
             reader.readAsArrayBuffer(e.target.files[0]);
+        
         }
     };
 
@@ -56,6 +64,7 @@ const CreateStudent = () => {
         e.preventDefault();
         setIsLoading(true); // Start loading
         try {
+            console.log("Cloud deployed started")
             const response = await fetch('https://placefolio.onrender.com/api/create-students', {
                 method: 'POST',
                 headers: {
@@ -63,7 +72,7 @@ const CreateStudent = () => {
                 },
                 body: JSON.stringify({ excelData: fileData, year: year }),
             });
-
+            
             const result = await response.json();
             if (response.ok) {
                 console.log('Cloud Server response:', result);
