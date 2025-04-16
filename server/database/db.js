@@ -11,10 +11,10 @@ const db = mysql.createPool({
 
 // PostgreSQL Connection (Supabase)
 const supabaseDb = new Pool({
-    connectionString: 'postgresql://postgres:dharuneee007@db.chxqvthayqrtdujjhiib.supabase.co:5432/postgres',
+    connectionString: 'postgresql://placement_6qz6_user:hoNcZFpKSoYvxNjyYVCYspCMpGYBHeoR@dpg-cvvimh3uibrs73bg2tdg-a.oregon-postgres.render.com/placement_6qz6',
     ssl: { rejectUnauthorized: false }, // Required for Supabase
 });
-
+//postgresql://postgres:dharuneee007@db.chxqvthayqrtdujjhiib.supabase.co:5432/postgres
 // Test MySQL Connection
 const testMysqlConnection = async () => {
     try {
