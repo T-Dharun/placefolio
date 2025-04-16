@@ -55,6 +55,24 @@ const CreateStudent = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true); // Start loading
+        try {
+            const response = await fetch('https://placefolio.onrender.com/api/create-students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ excelData: fileData, year: year }),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                console.log('Cloud Server response:', result);
+            } else {
+                console.error('Cloud erver error:', result.message || 'Something went wrong');
+            }
+        } catch (err) {
+            console.error('Error updating student records in cloud:', err);
+        }
 
         try {
             const response = await fetch('http://localhost:5000/api/create-students', {

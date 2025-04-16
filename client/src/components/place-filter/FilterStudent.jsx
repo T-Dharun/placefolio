@@ -1,37 +1,68 @@
 import { useState } from 'react';
-import { Button, Modal, Form,Spinner } from 'react-bootstrap';
-import "./style.css"
-const filterKey = ["company_name", "full_name", "roll_no", "status", "type"];
+import { Button, Modal, Form, Spinner } from 'react-bootstrap';
+import "./style.css";
 
-function FilterStudent(props) {
+const filterKey = ["company_name", "full_name", "roll_no", "status", "type", "round"];
+
+function FilterStudent({ filter, data, setFilterData, onCompanyExport }) {
   const [show, setShow] = useState(false);
-  const [filter, setFilter] = useState({});
-  const [currentFilter, setCurrentFilter] = useState("");
+  const [filterValues, setFilterValues] = useState({
+    company_name: '',
+    status: '',
+    round: '',
+    dateFrom: '',
+    dateTo: ''
+  });
+  
   const [isApplying, setIsApplying] = useState(false);
-
+  console.log(filterValues)
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  function handleFilterChanges() {
+  const applyFilters = () => {
     setIsApplying(true);
-    const value = props.data.filter(item => {
-      if (currentFilter && filter[currentFilter] && item[currentFilter] === filter[currentFilter]) {
-        return item;
-      }
-      return false;
-    });
-    props.setFilterData(value.length > 0 ? value : props.data); // Reset to full data if no matches
+    let filtered = [...data];
+
+    // Company filter
+    if (filterValues.company_name) {
+      filtered = filtered.filter(item => item.company_name === filterValues.company_name);
+    }
+
+    // Status filter (especially for placed/not placed)
+    if (filterValues.status) {
+      filtered = filtered.filter(item => item.status === filterValues.status);
+    }
+
+    // Round filter
+    if (filterValues.round) {
+      filtered = filtered.filter(item => item.round === filterValues.round);
+    }
+
+    // Date range filter
+    if (filterValues.dateFrom || filterValues.dateTo) {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.date);
+        const fromDate = filterValues.dateFrom ? new Date(filterValues.dateFrom) : null;
+        const toDate = filterValues.dateTo ? new Date(filterValues.dateTo) : null;
+        console.log(itemDate,fromDate,toDate)
+        
+        return (!fromDate || itemDate >= fromDate) && (!toDate || itemDate <= toDate);
+      });
+    }
+
+    setFilterData(filtered.length > 0 ? filtered : []);
     setTimeout(() => {
       setIsApplying(false);
       handleClose();
-    }, 500); // Simulate processing delay for better UX
-  }
+    }, 500);
+  };
 
   const formatKeyName = (key) => {
-    return key
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    return key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
+
+  const handleInputChange = (key, value) => {
+    setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -60,43 +91,51 @@ function FilterStudent(props) {
 
           <Modal.Body className="filter-modal-body">
             <Form>
-              <div className="filter-selection-group">
-                <Form.Group className="mb-3">
-                  <Form.Label className="filter-label">Filter By</Form.Label>
-                  <Form.Select
-                    id="filterKey"
-                    className="filter-select"
-                    value={currentFilter}
-                    onChange={(e) => setCurrentFilter(e.target.value)}
-                  >
-                    <option value="">Select Filter Category</option>
-                    {filterKey.map((type, index) => (
-                      <option key={index} value={type}>
-                        {formatKeyName(type)}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+              {/* Company Name Filter */}
+              <Form.Group className="mb-3">
+                <Form.Label>Company Name</Form.Label>
+                <Form.Select
+                  value={filterValues.company_name}
+                  onChange={(e) => handleInputChange('company_name', e.target.value)}
+                >
+                  <option value="">All Companies</option>
+                  {filter.company_name?.map((company, index) => (
+                    <option key={index} value={company}>{company}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
 
-                {currentFilter && (
-                  <Form.Group className="mb-3 filter-value-group">
-                    <Form.Label className="filter-label">Value</Form.Label>
-                    <Form.Select
-                      id="filterValue"
-                      className="filter-select"
-                      onChange={(e) => setFilter({ [currentFilter]: e.target.value })}
-                      disabled={!currentFilter || !props.filter[currentFilter]}
-                    >
-                      <option value="">Select Value</option>
-                      {props?.filter[currentFilter]?.map((type, index) => (
-                        <option key={index} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                )}
-              </div>
+              {/* Status Filter */}
+              <Form.Group className="mb-3">
+                <Form.Label>Status</Form.Label>
+                <Form.Select
+                  value={filterValues.status}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                >
+                  <option value="">All Statuses</option>
+                  {filter.status?.map((status, index) => (
+                    <option key={index} value={status}>{status}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+
+              {/* Date Range Filter */}
+              <Form.Group className="mb-3">
+                <Form.Label>Date Range</Form.Label>
+                <div className="d-flex gap-2">
+                  <Form.Control
+                    type="date"
+                    value={filterValues.dateFrom}
+                    onChange={(e) => handleInputChange('dateFrom', e.target.value)}
+                  />
+                  <Form.Control
+                    type="date"
+                    value={filterValues.dateTo}
+                    onChange={(e) => handleInputChange('dateTo', e.target.value)}
+                  />
+                </div>
+              </Form.Group>
             </Form>
           </Modal.Body>
 
@@ -112,8 +151,8 @@ function FilterStudent(props) {
             <Button 
               variant="" 
               className="apply-btn" 
-              onClick={handleFilterChanges}
-              disabled={!currentFilter || !filter[currentFilter] || isApplying}
+              onClick={applyFilters}
+              disabled={isApplying}
             >
               {isApplying ? (
                 <>

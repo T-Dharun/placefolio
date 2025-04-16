@@ -300,6 +300,12 @@
     padding: 1rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   }
+  .student-table{
+    overflow: scroll;
+  }
+  .table-wrapper-1{
+    height: 30em;
+  }
   
   /* Responsive Design */
   @media (max-width: 768px) {

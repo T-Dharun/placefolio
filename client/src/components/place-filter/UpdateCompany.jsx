@@ -26,11 +26,8 @@ function UpdateCompany() {
             const response = await fetch('http://localhost:5000/api/company');
             const result = await response.json();
             if (response.ok) {
-                result.data?.forEach(item => {
-                    if (!companyNames.includes(item.company_name)) {
-                        setCompanyNames(prev => [...prev, item.company_name]);
-                    }
-                });
+                setCompanyNames([...new Set(result.data?.map((item) => item.company_name))]);
+
             } else {
                 console.error('Server error:', result.message || 'Something went wrong');
             }
@@ -62,8 +59,6 @@ function UpdateCompany() {
             reader.readAsArrayBuffer(e.target.files[0]);
         }
     };
-    console.log(fileData)
-    console.log(company)
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -80,6 +75,7 @@ function UpdateCompany() {
         }
 
         try {
+            console.log(fileData)
             const response = await fetch('http://localhost:5000/api/create-student-company', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
