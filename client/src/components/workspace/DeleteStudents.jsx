@@ -1,46 +1,46 @@
 import React, { useState } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
-import axios from 'axios';
+import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import {db} from '../database/firebase';
 import "./style.css";
+import { notify, notifyFailure } from './notification';
 const DeleteStudents = () => {
   const [year, setYear] = useState('');
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Handle input change
+  
   const handleYearChange = (e) => {
     setYear(e.target.value);
   };
 
-  // Handle the delete request
+  
   const handleDelete = async (e) => {
     e.preventDefault();
-    
-    if (!year) {
-      setError('Year is required');
-      return;
-    }
-
     try {
-      // Send the DELETE request
-      const response = await axios.delete(`http://localhost:5000/api/delete-students/${year}`);
-
-      if (response.status === 200) {
-        setSuccessMessage(response.data.message);
-        setError(null);  // Clear previous errors
+      const studentsCollection = collection(db, "students");
+      const q = query(studentsCollection, where("year", "==", year)); 
+  
+      const querySnapshot = await getDocs(q);
+  
+      if (querySnapshot.empty) {
+        notify(`No students found with year ${year}.`);
+        return;
       }
-    } catch (err) {
-      // Handle errors
-      if (err.response) {
-        // If the error is from the server
-        setError(err.response.data.error || 'An error occurred');
-      } else {
-        // If the error is a network issue
-        setError('Network error, please try again later');
-      }
+  
+      const deletePromises = querySnapshot.docs.map((docSnap) => 
+        deleteDoc(doc(db, "students", docSnap.id))
+      );
+  
+      await Promise.all(deletePromises);
+  
+      notify(`${querySnapshot?.size} students of year ${year} have been deleted.`);
+    } catch (error) {
+      notifyFailure("Failed to delete students.");
+      console.error("Error deleting documents: ", error);
     }
   };
-
+  
   return (
       <Container className="delete-students-container">
       <div className="delete-students-wrapper">
@@ -73,3 +73,77 @@ const DeleteStudents = () => {
 };
 
 export default DeleteStudents;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const handleDelete = async (e) => {
+//   //   e.preventDefault();
+    
+  //   if (!year) {
+  //     setError('Year is required');
+  //     return;
+  //   }
+
+  //   try {
+  //     // Send the DELETE request
+  //     const response = await axios.delete(`http://localhost:5000/api/delete-students/${year}`);
+
+  //     if (response.status === 200) {
+  //       setSuccessMessage(response.data.message);
+  //       setError(null);  // Clear previous errors
+  //     }
+  //   } catch (err) {
+  //     // Handle errors
+  //     if (err.response) {
+  //       // If the error is from the server
+  //       setError(err.response.data.error || 'An error occurred');
+  //     } else {
+  //       // If the error is a network issue
+  //       setError('Network error, please try again later');
+  //     }
+  //   }
+  // };

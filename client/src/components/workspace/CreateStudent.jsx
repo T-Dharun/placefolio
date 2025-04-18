@@ -1,14 +1,41 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Container, Form, Button, Spinner } from 'react-bootstrap';
+import {db} from "../database/firebase"
+import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
 import './style.css';
+import { toast } from 'react-toastify';
 
 const CreateStudent = () => {
     const [fileData, setFileData] = useState([]);
     const [year, setYear] = useState(0);
-    const [isLoading, setIsLoading] = useState(false); // New loading state
+    const [isLoading, setIsLoading] = useState(null); 
 
-    // Function to convert Excel serial numbers or formatted dates to YYYY-MM-DD
+    const notify = (message) => {
+        toast.success(message, {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+    }
+    const notifyFailure = (message) => {
+        toast.error(message, {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            });
+    }
+    
     const formatDate = (dateValue) => {
         if (!dateValue) return null;
         let date=null;
@@ -18,10 +45,8 @@ const CreateStudent = () => {
             parsedDate.setDate(parsedDate.getDate() + 1);
             date=parsedDate.toISOString().split('T')[0];
             const parts = date.split(/[./\-]/);
-            //console.log(date)
             if (parts.length === 3) {
                 const [year, month, day] = parts;
-                console.log(day,month,year);
                 return `${year}-${day.padStart(2, '0')}-${month.padStart(2, '0')}`;
             }
         }
@@ -37,9 +62,9 @@ const CreateStudent = () => {
         return null;
     };
 
-    // Handle file upload and parse Excel data
     const handleFileChange = (e) => {
         if (e.target.files.length > 0) {
+            setIsLoading("Extracting Excel Data");
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = e.target.result;
@@ -52,8 +77,10 @@ const CreateStudent = () => {
                     ...row,
                     dob_ddmmyyyy: formatDate(row?.dob_ddmmyyyy),
                 }));
-                console.log(json)
                 setFileData(json);
+                setIsLoading(null);
+                notify("Successfully Extracted.");
+                console.log(json)
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         
@@ -62,48 +89,38 @@ const CreateStudent = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true); // Start loading
+      
         try {
-            console.log("Cloud deployed started")
-            const response = await fetch('https://placefolio.onrender.com/api/create-students', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ excelData: fileData, year: year }),
-            });
-            
-            const result = await response.json();
-            if (response.ok) {
-                console.log('Cloud Server response:', result);
-            } else {
-                console.error('Cloud erver error:', result.message || 'Something went wrong');
+          setIsLoading("Processing Students");
+          const studentsCollection = collection(db, "students");
+          const allStudentsSnapshot = await getDocs(studentsCollection);
+      
+          const existingRollNoMap = {};
+          allStudentsSnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.roll_no) {
+              existingRollNoMap[data.roll_no] = docSnap.id;
             }
-        } catch (err) {
-            console.error('Error updating student records in cloud:', err);
-        }
-
-        try {
-            const response = await fetch('http://localhost:5000/api/create-students', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ excelData: fileData, year: year }),
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-                console.log('Server response:', result);
+          });
+      
+          for (let student of fileData) {
+            const studentData = { ...student, year };
+      
+            if (existingRollNoMap[student.roll_no]) {
+              const studentRef = doc(db, "students", existingRollNoMap[student.roll_no]);
+              await updateDoc(studentRef, studentData);
             } else {
-                console.error('Server error:', result.message || 'Something went wrong');
+              await addDoc(studentsCollection, studentData);
             }
-        } catch (err) {
-            console.error('Error updating student records:', err);
-        } finally {
-            setIsLoading(false); // Stop loading regardless of success or failure
+          }
+          setIsLoading(null)
+          notify("Students inserted successfully.");
+        } catch (error) {
+          console.error("Error processing students: ", error);
+          notifyFailure("Students inserted Failed.");
         }
-    };
+      };
+      
 
     return (
         <Container className="update-student-container p-5">
@@ -119,11 +136,11 @@ const CreateStudent = () => {
                             placeholder="Enter Year (e.g., 2025)"
                             onChange={(e) => setYear(e.target.value)}
                             className="elegant-input"
-                            disabled={isLoading} // Disable input during loading
+                            disabled={isLoading} 
                         />
                     </Form.Group>
 
-                    <Form.Group className="mb-4">
+                    <Form.Group className="mb-4 ">
                         <Form.Label htmlFor="upload" className="elegant-label">
                             Upload Student Data (Excel File)
                         </Form.Label>
@@ -134,9 +151,9 @@ const CreateStudent = () => {
                                 accept=".xlsx, .xls"
                                 onChange={handleFileChange}
                                 className="file-input"
-                                disabled={isLoading} // Disable file input during loading
+                                disabled={isLoading} 
                             />
-                            <span className="file-upload-text">Choose File</span>
+                            <span className="file-upload-text my-2 py-5">Choose File</span>
                         </div>
                     </Form.Group>
 
@@ -144,9 +161,9 @@ const CreateStudent = () => {
                         onClick={handleSubmit}
                         className="submit-btn"
                         type="submit"
-                        disabled={isLoading} // Disable button during loading
+                        disabled={isLoading} 
                     >
-                        {isLoading ? (
+                        {isLoading!==null ? (
                             <>
                                 <Spinner
                                     as="span"
@@ -156,7 +173,7 @@ const CreateStudent = () => {
                                     aria-hidden="true"
                                     className="me-2"
                                 />
-                                Processing...
+                                {isLoading}...
                             </>
                         ) : (
                             'Submit'
@@ -169,3 +186,84 @@ const CreateStudent = () => {
 };
 
 export default CreateStudent;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     setIsLoading(true); // Start loading
+    //     try {
+    //         console.log("Cloud deployed started")
+    //         const response = await fetch('https://placefolio.onrender.com/api/create-students', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({ excelData: fileData, year: year }),
+    //         });
+            
+    //         const result = await response.json();
+    //         if (response.ok) {
+    //             console.log('Cloud Server response:', result);
+    //         } else {
+    //             console.error('Cloud erver error:', result.message || 'Something went wrong');
+    //         }
+    //     } catch (err) {
+    //         console.error('Error updating student records in cloud:', err);
+    //     }
+
+    //     try {
+    //         const response = await fetch('http://localhost:5000/api/create-students', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({ excelData: fileData, year: year }),
+    //         });
+
+    //         const result = await response.json();
+    //         if (response.ok) {
+    //             console.log('Server response:', result);
+    //         } else {
+    //             console.error('Server error:', result.message || 'Something went wrong');
+    //         }
+    //     } catch (err) {
+    //         console.error('Error updating student records:', err);
+    //     } finally {
+    //         setIsLoading(false); // Stop loading regardless of success or failure
+    //     }
+    // };
