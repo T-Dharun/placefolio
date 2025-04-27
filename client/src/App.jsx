@@ -1,5 +1,6 @@
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
+import GetOffer from "./components/offer_letter/GetOffer";
 
 function App() {
   return (

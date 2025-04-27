@@ -163,7 +163,8 @@ const FilterStudentEligible = () => {
       const isHistoryOfArrearsValid = student.history_of_arrears ? student.history_of_arrears <= filter.history_of_arrears : true;
 
       const isYearValid = student.year == filter.year;
-      return isCgpaValid && isMark10thValid && isMark12thValid && isArrearsValid && isHistoryOfArrearsValid && isYearValid;
+
+      return isCgpaValid && isMark10thValid && isMark12thValid && isArrearsValid && isHistoryOfArrearsValid && isYearValid && !student?.placed;
     });
     sortandStore(filteredData);
   };

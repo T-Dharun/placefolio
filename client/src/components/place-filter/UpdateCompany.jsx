@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Container, Form, Button, Spinner, Alert } from 'react-bootstrap';
+import { db } from "../database/firebase"
+import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
 import { toast } from 'react-toastify';
+import { notify ,notifyFailure} from "../workspace/notification"
 import "./style.css"
 
 const companyTypes = ["Software", "Core"];
@@ -11,15 +14,15 @@ function UpdateCompany() {
     const [fileData, setFileData] = useState([]);
     const [companyNames, setCompanyNames] = useState([]);
     const [singleUser, setSingleUser] = useState(false);
-    const [studentData, setData] = useState({ RegNo: "", Name: "" });
+    // const [studentData, setData] = useState({ RegNo: "", Name: "" });
     const [company, setCompany] = useState({
         companyName: "select",
         companyType: "select",
         status: "select",
         date: ""
     });
-    const [isLoading, setIsLoading] = useState(false); // Loading state
-    const [responseMessage, setResponseMessage] = useState(null); // Response state
+    const [isLoading, setIsLoading] = useState(null); 
+    const [responseMessage, setResponseMessage] = useState(null); 
 
     const handleCompanyList = async () => {
         try {
@@ -41,7 +44,9 @@ function UpdateCompany() {
     }, []);
 
     const handleFileChange = (e) => {
+        setIsLoading("Extracting Data");
         if (e.target.files) {
+            
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = e.target.result;
@@ -49,15 +54,19 @@ function UpdateCompany() {
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(worksheet);
-                const result = json.filter(row => 
-                    (row['Reg No'] && row['Reg No'].includes('EE')) || 
+                console.log(json)
+                const result = json.filter(row =>
+                    (row['Reg No'] && row['Reg No'].includes('EE')) ||
                     (row['Roll No'] && row['Roll No'].includes('EE')) ||
                     (row['roll_no'] && row['roll_no'].includes('EE'))
                 );
                 setFileData(result);
             };
+            
             reader.readAsArrayBuffer(e.target.files[0]);
+            
         }
+        setIsLoading(null);
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -67,15 +76,45 @@ function UpdateCompany() {
         if (singleUser) {
             setFileData([studentData]);
         }
-        if (company.companyName === "select" || company.status === "select" || 
+        if (company.companyName === "select" || company.status === "select" ||
             company.date === "" || company.companyType === "select") {
             setResponseMessage({ type: 'warning', text: 'Please fill all the fields.' });
             setIsLoading(false);
             return;
         }
+        if (company?.status === "Placed") {
+            try {
+                setIsLoading("Processing Students");
+                const studentsCollection = collection(db, "students");
+                const allStudentsSnapshot = await getDocs(studentsCollection);
 
+                const existingRollNoMap = {};
+                allStudentsSnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data.roll_no) {
+                        existingRollNoMap[data.roll_no] = docSnap.id;
+                    }
+                });
+
+                for (let student of fileData) {
+                    const studentData = { ...student, placed:true};
+
+                    if (existingRollNoMap[student?.roll_no]) {
+                        const studentRef = doc(db, "students", existingRollNoMap[student.roll_no]);
+                        await updateDoc(studentRef, studentData);
+                    }
+                }
+                setIsLoading(null)
+                notify("Students updated successfully.");
+            } catch (error) {
+                console.error("Error processing students: ", error);
+                notifyFailure("Students updated Failed.");
+            }
+        }
+        console.log(fileData)
         try {
-            console.log(fileData)
+            setIsLoading("Updating Student Data");
+            if(fileData.length===0) throw new Error("No data to update");
             const response = await fetch('http://localhost:5000/api/create-student-company', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -87,10 +126,10 @@ function UpdateCompany() {
                     date: company.date
                 }),
             });
+
             const result = await response.json();
             console.log(result)
             if (response.ok) {
-                setData({ RegNo: "", Name: "" });
                 setResponseMessage({ type: 'success', text: result.message });
                 toast.success('Data Register Successfully', {
                     position: "top-right",
@@ -114,10 +153,10 @@ function UpdateCompany() {
                 });
             }
         } catch (err) {
-            setResponseMessage({ type: 'error', text: 'Error updating company data' });
+            setResponseMessage({ type: 'Error', text: err?.message || 'Error updating company data' });
             console.error('Error updating company:', err);
         } finally {
-            setIsLoading(false);
+            setIsLoading(null);
         }
     };
 
@@ -145,8 +184,8 @@ function UpdateCompany() {
                                 <option key={index} value={type}>{type}</option>
                             ))}
                         </Form.Select>
-                        <Button 
-                            onClick={handleCreateCompany} 
+                        <Button
+                            onClick={handleCreateCompany}
                             className="add-btn"
                             disabled={isLoading}
                         >
@@ -195,13 +234,13 @@ function UpdateCompany() {
                         />
                     </Form.Group>
 
-                    <Button
+                    {/* <Button
                         onClick={() => setSingleUser(!singleUser)}
                         className="toggle-btn mb-3"
                         disabled={isLoading}
                     >
                         {singleUser ? "Multi User" : "Single User"}
-                    </Button>
+                    </Button> */}
 
                     {singleUser ? (
                         <>
@@ -248,7 +287,7 @@ function UpdateCompany() {
                         className="submit-btn"
                         disabled={isLoading}
                     >
-                        {isLoading ? (
+                        {isLoading!=null ? (
                             <>
                                 <Spinner
                                     as="span"
@@ -258,7 +297,7 @@ function UpdateCompany() {
                                     aria-hidden="true"
                                     className="me-2"
                                 />
-                                Processing...
+                                {isLoading}...
                             </>
                         ) : (
                             'Submit'
@@ -266,9 +305,9 @@ function UpdateCompany() {
                     </Button>
 
                     {responseMessage && (
-                        <Alert 
-                            variant={responseMessage.type === 'success' ? 'success' : 
-                                   responseMessage.type === 'error' ? 'danger' : 'warning'}
+                        <Alert
+                            variant={responseMessage.type === 'success' ? 'success' :
+                                responseMessage.type === 'error' ? 'danger' : 'warning'}
                             className="response-alert mt-3"
                         >
                             {responseMessage.text}

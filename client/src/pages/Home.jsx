@@ -6,6 +6,7 @@ import FilterStudentEligible from "../components/workspace/FilterStudentEligible
 import UpdateCompany from "../components/place-filter/UpdateCompany";
 import SelectStudent from "../components/place-filter/SelectStudent";
 import './PageStyle.css';
+import GetOffer from "../components/offer_letter/GetOffer";
 
 const Home = () => {
   const [sidebar, setSidebar] = useState(0);
@@ -22,6 +23,8 @@ const Home = () => {
         return <SelectStudent />;
       case 4:
         return <FilterStudentEligible />;
+      case 5:
+        return <GetOffer/>;
       default:
         return (
           <div className="no-route-container">
@@ -58,6 +61,7 @@ const sidebarValue = [
   { key: 2, value: 'DeleteStudent' },
   { key: 3, value: 'FilterStudent' },
   { key: 4, value: 'EligibleStudent' },
+  { key: 5, value: 'Download the Offer Letter' },
 ];
 
 export default Home;

@@ -72,6 +72,8 @@ const StudentTable = ({
                       parseFloat(student[col])?.toFixed(2)
                     ) : col.includes("gpa") ? (
                       parseFloat(student[col])?.toFixed(2)
+                    ) : col === 'placed' ? (
+                      student[col]?"Placed":"Not Placed"
                     ) : (
                       (student[col]==null||student[col]==undefined)?'-':student[col]
                     )}

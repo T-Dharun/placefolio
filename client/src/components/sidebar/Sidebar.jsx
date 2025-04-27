@@ -8,6 +8,7 @@ const sidebarValue = [
   { key: 2, value: 'DeleteBatch', icon: 'bi-trash-fill' },
   { key: 3, value: 'FilterStudent', icon: 'bi-filter-square-fill' },
   { key: 4, value: 'EligibleStudent', icon: 'bi-check-circle-fill' },
+  { key: 5, value: 'Get Offer', icon: 'bi-check-circle-fill' },
 ];
 
 const Sidebar = ({ setSidebar }) => {

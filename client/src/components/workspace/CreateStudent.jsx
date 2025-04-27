@@ -104,7 +104,7 @@ const CreateStudent = () => {
           });
       
           for (let student of fileData) {
-            const studentData = { ...student, year };
+            const studentData = { ...student, year ,placed:false};
       
             if (existingRollNoMap[student.roll_no]) {
               const studentRef = doc(db, "students", existingRollNoMap[student.roll_no]);
@@ -119,6 +119,31 @@ const CreateStudent = () => {
           console.error("Error processing students: ", error);
           notifyFailure("Students inserted Failed.");
         }
+
+        try {
+            setIsLoading("Insert Students Locally");
+            const response = await fetch('http://localhost:5000/api/create-students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ excelData: fileData, year: year ,placed:false}),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                notify("Students inserted successfully in local.");
+                console.log('Server response:', result);
+            } else {
+                console.error('Server error:', result.message || 'Something went wrong');
+            }
+        } catch (err) {
+            notifyFailure("Error processing students in local");
+            console.error('Error updating student records:', err);
+        } finally {
+            setIsLoading(null);
+        }
+
       };
       
 
@@ -153,7 +178,7 @@ const CreateStudent = () => {
                                 className="file-input"
                                 disabled={isLoading} 
                             />
-                            <span className="file-upload-text my-2 py-5">Choose File</span>
+                            <span className="file-upload-text  py-5">Choose File</span>
                         </div>
                     </Form.Group>
 
@@ -246,24 +271,5 @@ export default CreateStudent;
     //         console.error('Error updating student records in cloud:', err);
     //     }
 
-    //     try {
-    //         const response = await fetch('http://localhost:5000/api/create-students', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ excelData: fileData, year: year }),
-    //         });
-
-    //         const result = await response.json();
-    //         if (response.ok) {
-    //             console.log('Server response:', result);
-    //         } else {
-    //             console.error('Server error:', result.message || 'Something went wrong');
-    //         }
-    //     } catch (err) {
-    //         console.error('Error updating student records:', err);
-    //     } finally {
-    //         setIsLoading(false); // Stop loading regardless of success or failure
-    //     }
+        
     // };

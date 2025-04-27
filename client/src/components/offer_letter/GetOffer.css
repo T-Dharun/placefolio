@@ -1,0 +1,11 @@
+.offer-generate-button{
+    background:linear-gradient(#2D88C4,#0f71b3);
+    padding: 1em 3em;
+}
+.offer-generate-button:hover{
+    background:linear-gradient(#2c7baf,#0778c4);
+}
+.table-heading-offer th{
+    background:linear-gradient(#2D88C4,#0f71b3);
+    color: white;
+}
