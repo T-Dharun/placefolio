@@ -23,7 +23,6 @@ const handleArrear = (arrear) => {
 };
 
 
-// Insert student into database
 const insertStudents = async (req, res) => {
     try {
         const { excelData,year } = req.body;
@@ -34,10 +33,8 @@ const insertStudents = async (req, res) => {
             });
         }
 
-        // List of errors
         const errors = [];
 
-        // Loop through each student's data
         for (const data of excelData) {
             const {
                 full_name, first_name, last_name, last_expansion, roll_no, gender, dob_ddmmyyyy, dob_mmddyyyy,
@@ -46,7 +43,7 @@ const insertStudents = async (req, res) => {
                 cgpa_1sem, cgpa_2sem, cgpa_3sem, cgpa_4sem, cgpa_5sem, cgpa_6sem, cgpa_7sem, cgpa_8sem, number_of_arrears,
                 history_of_arrears, pan_number
             } = data;
-            // Validate required fields
+
             const requiredFields = {
                 full_name, first_name, roll_no, gender, dob_ddmmyyyy,
                 mobile_no, primary_email, college_email
@@ -59,10 +56,9 @@ const insertStudents = async (req, res) => {
                     roll_no,
                     error: `Missing required fields: ${missingFields.join(', ')}`
                 });
-                continue;  // Skip current iteration and proceed to the next one
+                continue;
             }
 
-            // Prepare SQL query with ON DUPLICATE KEY UPDATE for roll_no
             const sql = `INSERT INTO students (
                 full_name, first_name, last_name, last_expansion, roll_no, gender, dob_ddmmyyyy, dob_mmddyyyy,
                 mobile_no, primary_email, college_email, mark_10th, mark_12th,
@@ -82,8 +78,6 @@ const insertStudents = async (req, res) => {
                 cgpa_5sem = VALUES(cgpa_5sem), cgpa_6sem = VALUES(cgpa_6sem), cgpa_7sem = VALUES(cgpa_7sem),
                 cgpa_8sem = VALUES(cgpa_8sem), number_of_arrears = VALUES(number_of_arrears),
                 history_of_arrears = VALUES(history_of_arrears), pan_number = VALUES(pan_number)`;
-
-            // Prepare values, convert "-" to null for GPA and CGPA fields
             const values = [
                 full_name, first_name, last_name, last_expansion, roll_no, gender, dob_ddmmyyyy, dob_mmddyyyy,
                 mobile_no, primary_email, college_email, handleGPA(mark_10th), handleGPA(mark_12th) || null, handleGPA(diploma_mark) || null,
@@ -93,45 +87,12 @@ const insertStudents = async (req, res) => {
                 handleGPA(cgpa_8sem), handleArrear(number_of_arrears) || null, handleArrear(history_of_arrears) || null, pan_number, year || 0
             ];
 
-            // Perform the database operation
-            
-
-            const sqlPostgres = `INSERT INTO students (
-                full_name, first_name, last_name, last_expansion, roll_no, gender, dob_ddmmyyyy, dob_mmddyyyy,
-                mobile_no, primary_email, college_email, mark_10th, mark_12th, diploma_mark, gpa_1sem, gpa_2sem,
-                gpa_3sem, gpa_4sem, gpa_5sem, gpa_6sem, gpa_7sem, gpa_8sem, cgpa_1sem, cgpa_2sem, cgpa_3sem,
-                cgpa_4sem, cgpa_5sem, cgpa_6sem, cgpa_7sem, cgpa_8sem, number_of_arrears, history_of_arrears,
-                pan_number, year
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-                      $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
-            ON CONFLICT (roll_no) DO UPDATE SET
-                full_name = EXCLUDED.full_name, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name,
-                last_expansion = EXCLUDED.last_expansion, gender = EXCLUDED.gender, dob_ddmmyyyy = EXCLUDED.dob_ddmmyyyy,
-                dob_mmddyyyy = EXCLUDED.dob_mmddyyyy, mobile_no = EXCLUDED.mobile_no, primary_email = EXCLUDED.primary_email,
-                college_email = EXCLUDED.college_email, mark_10th = EXCLUDED.mark_10th, mark_12th = EXCLUDED.mark_12th,
-                diploma_mark = EXCLUDED.diploma_mark, gpa_1sem = EXCLUDED.gpa_1sem, gpa_2sem = EXCLUDED.gpa_2sem,
-                gpa_3sem = EXCLUDED.gpa_3sem, gpa_4sem = EXCLUDED.gpa_4sem, gpa_5sem = EXCLUDED.gpa_5sem, gpa_6sem = EXCLUDED.gpa_6sem,
-                gpa_7sem = EXCLUDED.gpa_7sem, gpa_8sem = EXCLUDED.gpa_8sem, cgpa_1sem = EXCLUDED.cgpa_1sem, cgpa_2sem = EXCLUDED.cgpa_2sem,
-                cgpa_3sem = EXCLUDED.cgpa_3sem, cgpa_4sem = EXCLUDED.cgpa_4sem, cgpa_5sem = EXCLUDED.cgpa_5sem, cgpa_6sem = EXCLUDED.cgpa_6sem,
-                cgpa_7sem = EXCLUDED.cgpa_7sem, cgpa_8sem = EXCLUDED.cgpa_8sem, number_of_arrears = EXCLUDED.number_of_arrears,
-                history_of_arrears = EXCLUDED.history_of_arrears, pan_number = EXCLUDED.pan_number, year = EXCLUDED.year`;
-            
                 try{
                     await db.query(sql, values);
                 }
                 catch(err){
                     console.log("Local DB Not established")
                 }
-                try{
-                    await supabaseDb.query(sqlPostgres, values);
-                }
-                catch(err){
-                    console.log("SupaBase DB not connected");
-                }
-                
-            
-
-
         }
 
         // Return a response with success or failure details
